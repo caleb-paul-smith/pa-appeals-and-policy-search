@@ -1,0 +1,27 @@
+# ---------------------------------------------------------------------------
+# pa-appeals-and-policy-search — example configuration
+#
+# Copy this file to `config.yaml` (which is git-ignored) and fill in the
+# REPLACE_ME placeholders AFTER you have chosen and approved a specific
+# Unity Catalog volume and index schema.
+#
+# Do NOT commit a populated config.yaml. Do NOT put tokens or secrets here.
+# Real volume paths, catalogs, schemas, and warehouse IDs are provided at
+# runtime via Databricks App environment variables / app resources.
+# ---------------------------------------------------------------------------
+
+# Approved Unity Catalog volume that holds the OCR'd source PDFs.
+# The app and the indexer only ever read .pdf files under this path.
+appeals_volume_path: "/Volumes/REPLACE_ME/catalog/schema/appeals_volume"
+
+# Catalog + schema where the two governed Delta index tables are created.
+index_catalog: "REPLACE_ME"
+index_schema: "REPLACE_ME"
+
+# Index table names (created by notebooks/01_build_page_index.py).
+documents_table: "appeal_research_documents"
+pages_table: "appeal_research_pages"
+
+# Pilot guardrail: maximum number of PDF files the indexer will process while
+# in pilot mode. Keep this small for the first controlled run.
+pilot_max_files: 25

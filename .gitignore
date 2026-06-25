@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Build output
+dist/
+server/dist/
+client/dist/
+*.tsbuildinfo
+
+# Local configuration (never commit real values)
+config.yaml
+config.local.yaml
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Databricks / pilot artifacts (must never be committed)
+*.pdf
+demo-cache/
+scratch/
+local-data/
+
+# Caches
+.cache/
+.vite/
+
+# Python
+__pycache__/
+*.pyc

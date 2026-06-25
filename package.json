@@ -1,0 +1,46 @@
+{
+  "name": "pa-appeals-and-policy-search",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Internal lawyer-style page-level research tool for FEMA appeal decisions and policy PDFs. Deterministic search over a governed Unity Catalog page index with an in-browser PDF.js reader. Runs as a Databricks App.",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "npm run build:server && npm run build:client",
+    "build:server": "tsc -p server/tsconfig.json",
+    "build:client": "vite build",
+    "typecheck": "tsc -p server/tsconfig.json --noEmit && tsc -p client/tsconfig.json --noEmit",
+    "test:parser": "tsx server/src/search/queryParser.test.ts",
+    "test:security": "tsx server/src/pdf/pathGuard.test.ts",
+    "test": "npm run test:parser && npm run test:security",
+    "prestart": "npm run build",
+    "start": "node server/dist/index.js",
+    "dev:server": "tsx watch server/src/index.ts",
+    "dev:client": "vite",
+    "dev": "concurrently -k -n server,client \"npm:dev:server\" \"npm:dev:client\""
+  },
+  "dependencies": {
+    "@databricks/sql": "^1.8.4",
+    "@types/express": "^4.17.21",
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^20.14.10",
+    "@vitejs/plugin-react": "^4.3.1",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "js-yaml": "^4.1.0",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^4.4.168",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "typescript": "^5.5.3",
+    "vite": "^5.3.3"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "concurrently": "^8.2.2",
+    "tsx": "^4.16.2"
+  }
+}

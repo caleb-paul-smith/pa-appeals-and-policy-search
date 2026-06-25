@@ -1,0 +1,41 @@
+# ---------------------------------------------------------------------------
+# Databricks App manifest for pa-appeals-and-policy-search (Node.js).
+#
+# The app builds the React client and the Express server, then serves both
+# from a single Node process bound to the Databricks-provided app port.
+#
+# Environment values below are NON-SECRET placeholders. Real warehouse ids,
+# volume paths, catalogs, and schemas are configured in the Databricks App UI
+# as environment variables and/or as attached app resources (see README).
+# ---------------------------------------------------------------------------
+
+command:
+  - "npm"
+  - "run"
+  - "start"
+
+env:
+  # Node runtime hint.
+  - name: "NODE_ENV"
+    value: "production"
+
+  # ---- Index source (set these in the App UI to leave Demo Mode) ----
+  # Leave unset/empty to keep the app in clearly-labeled DEMO MODE.
+  - name: "APPEALS_VOLUME_PATH"
+    value: ""
+  - name: "DOCUMENTS_TABLE"
+    value: ""
+  - name: "PAGES_TABLE"
+    value: ""
+
+  # ---- SQL warehouse ----
+  # Prefer attaching a SQL Warehouse *app resource* named "sql-warehouse";
+  # Databricks injects its id. This env var is a fallback for the id.
+  - name: "DATABRICKS_WAREHOUSE_ID"
+    valueFrom: "sql-warehouse"
+
+# NOTE on resources: attach the following in the Databricks App UI AFTER you
+# choose the source volume and index schema (documented in README.md):
+#   1. A Unity Catalog *volume* resource (READ ONLY) for APPEALS_VOLUME_PATH.
+#   2. A SQL *warehouse* resource (CAN USE / read access to the index tables).
+# Do not grant additional privileges beyond read access.
