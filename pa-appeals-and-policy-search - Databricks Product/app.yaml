@@ -1,0 +1,10 @@
+command:
+  - python
+  - app.py
+env:
+  - name: DATABRICKS_HOST
+    value: "https://adb-5672234203219303.3.azuredatabricks.net"
+  - name: VS_ENDPOINT_NAME
+    value: "pa-appeals-search-endpoint"
+  - name: VS_INDEX_NAME
+    value: "tws_ro_region5.rcd.pa_appeals_chunks_vs_index"
