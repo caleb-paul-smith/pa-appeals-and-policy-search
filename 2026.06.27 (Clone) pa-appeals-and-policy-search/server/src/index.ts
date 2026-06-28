@@ -16,6 +16,7 @@ import {
   fetchRunStatus,
   triggerRefresh,
 } from "./admin/databricksAdmin";
+import { requireAdmin, isCallerAdmin } from "./admin/adminAuth";
 
 const config = getConfig();
 const source = createSource(config);
@@ -125,7 +126,16 @@ app.post("/api/semantic-search", async (req: Request, res: Response) => {
   }
 });
 
-app.get("/api/admin/stats", async (req: Request, res: Response) => {
+// Admin access check — called by the frontend to decide whether to show the Admin tab.
+app.get("/api/admin/check", async (req: Request, res: Response) => {
+  const allowed = await isCallerAdmin(forwardedUserToken(req), config);
+  res.json({ admin: allowed });
+});
+
+// All remaining admin routes require the caller to be in the ADMIN_USERS list.
+const adminGate = requireAdmin(config);
+
+app.get("/api/admin/stats", adminGate, async (req: Request, res: Response) => {
   try {
     res.json(await fetchAdminStats(forwardedUserToken(req), config));
   } catch (err) {
@@ -133,7 +143,7 @@ app.get("/api/admin/stats", async (req: Request, res: Response) => {
   }
 });
 
-app.post("/api/admin/refresh", async (req: Request, res: Response) => {
+app.post("/api/admin/refresh", adminGate, async (req: Request, res: Response) => {
   try {
     res.json(await triggerRefresh(forwardedUserToken(req), config));
   } catch (err) {
@@ -141,7 +151,7 @@ app.post("/api/admin/refresh", async (req: Request, res: Response) => {
   }
 });
 
-app.get("/api/admin/status/:runId", async (req: Request, res: Response) => {
+app.get("/api/admin/status/:runId", adminGate, async (req: Request, res: Response) => {
   try {
     res.json(await fetchRunStatus(req.params.runId, forwardedUserToken(req), config));
   } catch (err) {

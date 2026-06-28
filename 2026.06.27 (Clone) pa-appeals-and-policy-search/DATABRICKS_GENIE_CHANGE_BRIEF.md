@@ -304,8 +304,42 @@ The first local Vite build attempt failed only because the local sandbox blocked
 4. Confirm the caller has permission to query the Vector Search index.
 5. Confirm the caller has permission to submit and inspect Jobs API runs.
 6. Confirm the processor notebook path has not changed.
-7. Confirm whether all authenticated users should see the Admin tab or whether it should be role-gated.
+7. ~~Confirm whether all authenticated users should see the Admin tab or whether it should be role-gated.~~ Resolved — Admin is now role-gated via `ADMIN_USERS`.
 8. Confirm whether the Vector Search chunks table can expose a document id or relative PDF path for semantic result preview.
+
+## Admin Route Authorization
+
+The Admin tab is now role-gated server-side.
+
+### Mechanism
+
+New file: `server/src/admin/adminAuth.ts`
+
+Behavior:
+
+- An `ADMIN_USERS` environment variable (comma-separated emails) defines the allow-list.
+- On every admin request, the middleware extracts `X-Forwarded-Access-Token`, calls the Databricks SCIM `/Me` endpoint to resolve the caller's email, and compares it against the allow-list.
+- Resolved identities are cached per token SHA-256 to avoid redundant lookups.
+- If `ADMIN_USERS` is empty (unconfigured), all authenticated users are granted admin access — preserving dev/demo usability.
+- A lightweight `GET /api/admin/check` endpoint returns `{ admin: true|false }` so the React client can conditionally render the Admin tab.
+
+### Environment
+
+`app.yaml` now includes:
+
+```yaml
+- name: ADMIN_USERS
+  value: "0492734585@fema.dhs.gov"
+```
+
+Add additional emails comma-separated (e.g., `"user1@fema.dhs.gov,user2@fema.dhs.gov"`).
+
+### Routes affected
+
+- `GET /api/admin/stats` — now gated
+- `POST /api/admin/refresh` — now gated
+- `GET /api/admin/status/:runId` — now gated
+- `GET /api/admin/check` — ungated (returns boolean only)
 
 ## Recommendations
 

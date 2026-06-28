@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { fetchSearch, fetchSemanticSearch, fetchStatus } from "./api";
+import { checkAdminAccess, fetchSearch, fetchSemanticSearch, fetchStatus } from "./api";
 import type { SearchMode, SearchResponse, SearchResult, StatusResponse } from "./types";
 import { SearchPanel } from "./components/SearchPanel";
 import { ResultsList } from "./components/ResultsList";

@@ -2,6 +2,28 @@ command:
   - npm
   - run
   - start
+resources:
+  - name: secret
+    secret:
+      scope: pa-appeals-and-policy-search
+      key: jobs-token
+      permission: READ
+oauth_scopes:
+  - jobs
+  - sql
+  - catalog.catalogs:read
+  - catalog.schemas:read
+  - catalog.tables:read
+  - catalog.connections
+  - vector-search
+  - model-serving
+  - ai-gateway
+  - genie
+  - workspace.workspace
+  - files
+  - postgres
+  - mcp.functions
+  - mcp.external
 env:
   - name: DATABRICKS_HOST
     value: "https://adb-5672234203219303.3.azuredatabricks.net"
@@ -14,10 +36,12 @@ env:
   - name: APPEALS_VOLUME_PATH
     value: "/Volumes/tws_ro_region5/rcd/pa_second_appeals"
   - name: DATABRICKS_WAREHOUSE_ID
-    valueFrom:
-      resourceRef:
-        name: sql-warehouse
+    valueFrom: sql-warehouse
   - name: DOCUMENTS_TABLE
     value: ""
   - name: PAGES_TABLE
     value: ""
+  - name: ADMIN_USERS
+    value: "0492734585@fema.dhs.gov"
+  - name: JOBS_TOKEN
+    valueFrom: secret

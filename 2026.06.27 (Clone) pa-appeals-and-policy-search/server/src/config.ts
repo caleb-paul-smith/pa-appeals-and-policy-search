@@ -29,6 +29,8 @@ export interface AppConfig {
   vsEndpointName: string;
   processorNotebookPath: string;
   hasWarehouse: boolean;
+  // Admin access control
+  adminUsers: string[]; // Lowercase email addresses allowed to use admin routes
   // hard caps
   maxCandidatePages: number;
   maxResults: number;
@@ -87,6 +89,11 @@ export function getConfig(): AppConfig {
     "/Users/0492734585@fema.dhs.gov/pa-appeals-and-policy-search/PA Appeals PDF Incremental Processor"
   ).trim();
 
+  const adminUsers = (process.env.ADMIN_USERS || "")
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+
   // Env-provided fully-qualified table names take precedence if present.
   const documentsTableFqn =
     (process.env.DOCUMENTS_TABLE || "").trim() ||
@@ -119,6 +126,7 @@ export function getConfig(): AppConfig {
     vsEndpointName,
     processorNotebookPath,
     hasWarehouse,
+    adminUsers,
     maxCandidatePages: Number(process.env.MAX_CANDIDATE_PAGES || 2000),
     maxResults: Number(process.env.MAX_RESULTS || 100),
   };

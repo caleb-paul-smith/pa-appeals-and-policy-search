@@ -79,6 +79,10 @@ export async function triggerRefresh(
       message: "Demo refresh created. Configure DATABRICKS_HOST in Databricks to submit the processor notebook.",
     };
   }
+  // Use a PAT stored as a Databricks secret (JOBS_TOKEN) for Jobs API calls.
+  // Neither the forwarded user OAuth token nor DATABRICKS_TOKEN carry the 'jobs'
+  // scope in this workspace; a PAT bypasses OAuth scope restrictions entirely.
+  const jobsToken = process.env.JOBS_TOKEN || process.env.DATABRICKS_TOKEN || userToken;
   const response = await databricksPost<SubmitRunResponse>(
     "/api/2.1/jobs/runs/submit",
     {
@@ -100,7 +104,7 @@ export async function triggerRefresh(
         },
       ],
     },
-    userToken,
+    jobsToken,
     config
   );
   const runId = String(response.run_id ?? "");
@@ -129,9 +133,11 @@ export async function fetchRunStatus(
       endTime: "Demo",
     };
   }
+  // Use the same PAT-backed token for run status polling.
+  const jobsToken = process.env.JOBS_TOKEN || process.env.DATABRICKS_TOKEN || userToken;
   const data = await databricksGet<RunStatusResponse>(
     `/api/2.1/jobs/runs/get?run_id=${encodeURIComponent(cleanRunId)}`,
-    userToken,
+    jobsToken,
     config
   );
   const lifecycleState = data.state?.life_cycle_state ?? "UNKNOWN";

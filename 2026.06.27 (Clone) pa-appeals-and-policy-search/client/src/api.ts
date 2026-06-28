@@ -37,6 +37,17 @@ export async function fetchRunStatus(runId: string): Promise<AdminRunStatus> {
   return readJson<AdminRunStatus>(res);
 }
 
+export async function checkAdminAccess(): Promise<boolean> {
+  try {
+    const res = await fetch("/api/admin/check");
+    if (!res.ok) return false;
+    const data = (await res.json()) as { admin?: boolean };
+    return data.admin === true;
+  } catch {
+    return false;
+  }
+}
+
 export function pdfUrl(documentId: string): string {
   return `/pdf/${encodeURIComponent(documentId)}`;
 }
