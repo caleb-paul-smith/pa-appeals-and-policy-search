@@ -43,6 +43,7 @@ export function App() {
   const initial = useRef(readUrlState());
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [activeTab, setActiveTab] = useState<AppTab>("search");
+  const [isAdmin, setIsAdmin] = useState(false);
   const [mode, setMode] = useState<SearchMode>("deterministic");
   const [query, setQuery] = useState(initial.current.q);
   const [response, setResponse] = useState<SearchResponse | null>(null);
@@ -62,7 +63,16 @@ export function App() {
     fetchStatus()
       .then(setStatus)
       .catch(() => setStatus(null));
+    // Only surface the Admin tab to callers the server recognizes as admins.
+    checkAdminAccess()
+      .then(setIsAdmin)
+      .catch(() => setIsAdmin(false));
   }, []);
+
+  // If admin access is lost (or never granted), never strand the user on Admin.
+  useEffect(() => {
+    if (!isAdmin && activeTab === "admin") setActiveTab("search");
+  }, [isAdmin, activeTab]);
 
   const runSearch = useCallback(async (q: string, selectedMode: SearchMode) => {
     const trimmed = q.trim();
@@ -145,13 +155,15 @@ export function App() {
         >
           Search
         </button>
-        <button
-          type="button"
-          className={activeTab === "admin" ? "active" : ""}
-          onClick={() => setActiveTab("admin")}
-        >
-          Admin
-        </button>
+        {isAdmin && (
+          <button
+            type="button"
+            className={activeTab === "admin" ? "active" : ""}
+            onClick={() => setActiveTab("admin")}
+          >
+            Admin
+          </button>
+        )}
       </nav>
 
       {activeTab === "search" ? (
