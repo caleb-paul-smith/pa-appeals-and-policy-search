@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import type { SearchMode } from "../types";
 import { AdvancedHelp } from "./AdvancedHelp";
 import { PilotBoundaries } from "./PilotBoundaries";
@@ -17,11 +17,23 @@ interface Props {
   onClear: () => void;
 }
 
+const MODES: Array<{ id: SearchMode; label: string; hint: string }> = [
+  {
+    id: "deterministic",
+    label: "Exact words",
+    hint: "Finds your exact terms. Supports quotes, AND/OR/NOT, wildcards, and proximity.",
+  },
+  {
+    id: "semantic",
+    label: "By meaning",
+    hint: "Finds passages about the same idea, even when the wording differs.",
+  },
+];
+
 export function SearchPanel({
   query,
   searching,
   mode,
-  example,
   boundaries,
   onModeChange,
   onSubmit,
@@ -30,6 +42,8 @@ export function SearchPanel({
   const [local, setLocal] = useState(query);
   const [history, setHistory] = useState<string[]>([]);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
     if (query === "" || query !== local) setLocal(query);
@@ -82,39 +96,43 @@ export function SearchPanel({
     onSubmit(item, mode);
   };
 
+  const insertOperator = (syntax: string) => {
+    setLocal(syntax);
+    inputRef.current?.focus();
+  };
+
+  const activeHint = MODES.find((m) => m.id === mode)?.hint;
+
   return (
     <div className="search-panel">
       <form onSubmit={submit} className="search-form">
-        <div className="mode-toggle" role="group" aria-label="Search mode">
-          <button
-            type="button"
-            className={mode === "deterministic" ? "active" : ""}
-            onClick={() => onModeChange("deterministic")}
-          >
-            Deterministic
-          </button>
-          <button
-            type="button"
-            className={mode === "semantic" ? "active" : ""}
-            onClick={() => onModeChange("semantic")}
-          >
-            Semantic
-          </button>
+        <div className="mode-switch" role="group" aria-label="How to search">
+          {MODES.map((m) => (
+            <button
+              key={m.id}
+              type="button"
+              className={mode === m.id ? "active" : ""}
+              aria-pressed={mode === m.id}
+              onClick={() => onModeChange(m.id)}
+            >
+              {m.label}
+            </button>
+          ))}
         </div>
+        {activeHint && <p className="mode-hint">{activeHint}</p>}
 
-        <label htmlFor="query" className="field-label">
-          Search query
-        </label>
         <div className="query-wrap">
           <textarea
             id="query"
+            ref={inputRef}
             className="query-input"
-            rows={3}
+            rows={2}
             spellCheck={false}
+            aria-label="Search query"
             placeholder={
               mode === "semantic"
-                ? "e.g. debris removal eligibility on federal-aid routes"
-                : 'e.g.  "direct administrative costs"  AND procurement'
+                ? "Describe what you're looking for…"
+                : "Search appeals and policy…"
             }
             value={local}
             onChange={(e) => setLocal(e.target.value)}
@@ -124,6 +142,7 @@ export function SearchPanel({
           />
           {historyOpen && history.length > 0 && (
             <div className="query-history" role="listbox" aria-label="Recent searches">
+              <div className="query-history-head">Recent</div>
               {history.map((item) => (
                 <button
                   key={item}
@@ -140,26 +159,41 @@ export function SearchPanel({
 
         <div className="search-actions">
           <button type="submit" className="btn btn-primary" disabled={searching || !local.trim()}>
-            {searching ? "Searching..." : "Search"}
+            {searching ? "Searching…" : "Search"}
           </button>
-          <button type="button" className="btn btn-ghost" onClick={clear}>
-            Clear
-          </button>
+          {local && (
+            <button type="button" className="btn btn-ghost" onClick={clear}>
+              Clear
+            </button>
+          )}
         </div>
 
-        {mode === "deterministic" && example && (
-          <p className="example-hint">
-            Try: <code>{example.replace(/^Examples:\s*/, "").split("|")[0].trim()}</code>
-          </p>
-        )}
-        {mode === "semantic" && (
-          <p className="example-hint">
-            Semantic mode ranks conceptually similar passages from the live Vector Search index.
-          </p>
+        {mode === "deterministic" && (
+          <div className={`advanced${advancedOpen ? " open" : ""}`}>
+            <button
+              type="button"
+              className="advanced-toggle"
+              aria-expanded={advancedOpen}
+              onClick={() => setAdvancedOpen((v) => !v)}
+            >
+              <span className="chev" aria-hidden>
+                {advancedOpen ? "▾" : "▸"}
+              </span>
+              Advanced search
+              <span className="advanced-sub">exact phrases · wildcards · AND/OR/NOT · proximity</span>
+            </button>
+            {advancedOpen && (
+              <div className="advanced-body">
+                <p className="advanced-intro">
+                  Tap any pattern to drop it into the search box, then edit the words.
+                </p>
+                <AdvancedHelp onInsert={insertOperator} />
+              </div>
+            )}
+          </div>
         )}
       </form>
 
-      {mode === "deterministic" && <AdvancedHelp />}
       <PilotBoundaries boundaries={boundaries} />
     </div>
   );

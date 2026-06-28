@@ -70,6 +70,7 @@ app.get("/api/status", async (_req: Request, res: Response) => {
       config: {
         documentsTable: config.documentsTableFqn || null,
         pagesTable: config.pagesTableFqn || null,
+        chunksTable: config.chunksTableFqn || null,
         warehouseConfigured: config.hasWarehouse,
         volumeConfigured: !!config.appealsVolumePath,
         vectorSearchConfigured: !!config.vsIndexName,

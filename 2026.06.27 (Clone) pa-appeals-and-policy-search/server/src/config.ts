@@ -22,6 +22,10 @@ export interface AppConfig {
   pagesTable: string; // unqualified name
   documentsTableFqn: string; // catalog.schema.table or "" in demo
   pagesTableFqn: string;
+  // Chunks table behind the Vector Search index. Carries the real extracted
+  // text (chunk_text) and is used for deterministic/keyword search when the
+  // dedicated documents/pages page-index tables have not been built.
+  chunksTableFqn: string;
   pilotMaxFiles: number;
   warehouseId: string;
   databricksHost: string;
@@ -68,6 +72,19 @@ function buildFqn(catalog: string, schema: string, table: string): string {
   return `${catalog}.${schema}.${table}`;
 }
 
+/**
+ * The Vector Search index name (e.g. `cat.schema.foo_chunks_vs_index`) is backed
+ * by a Delta source table of the same name without the trailing `_index`
+ * (`cat.schema.foo_chunks_vs`). We can therefore run keyword search against the
+ * source table without any extra configuration. An explicit `CHUNKS_TABLE`
+ * always wins.
+ */
+function deriveChunksTable(vsIndexName: string): string {
+  const name = (vsIndexName || "").trim();
+  if (!name) return "";
+  return name.replace(/_index$/, "");
+}
+
 let cached: AppConfig | null = null;
 
 export function getConfig(): AppConfig {
@@ -101,13 +118,22 @@ export function getConfig(): AppConfig {
   const pagesTableFqn =
     (process.env.PAGES_TABLE || "").trim() || buildFqn(indexCatalog, indexSchema, pagesTable);
 
+  const chunksTableFqn = (process.env.CHUNKS_TABLE || "").trim() || deriveChunksTable(vsIndexName);
+
   const volumeConfigured = !isPlaceholder(appealsVolumePath) && appealsVolumePath.startsWith("/Volumes/");
   const tablesConfigured = !!documentsTableFqn && !!pagesTableFqn;
+  const chunksConfigured = !!chunksTableFqn;
   const hasWarehouse = !!warehouseId;
 
+  // Leave demo mode when there is a SQL warehouse plus a searchable backend:
+  // either the dedicated page-index tables (+ volume), or the Vector Search
+  // chunks table (volume optional — it only enables PDF preview).
   let mode: AppMode = "demo";
-  if (volumeConfigured && tablesConfigured && hasWarehouse) {
-    mode = process.env.APP_MODE === "production" ? "production" : "pilot";
+  const pilotOrProd: AppMode = process.env.APP_MODE === "production" ? "production" : "pilot";
+  if (hasWarehouse && volumeConfigured && tablesConfigured) {
+    mode = pilotOrProd;
+  } else if (hasWarehouse && chunksConfigured) {
+    mode = pilotOrProd;
   }
 
   cached = {
@@ -119,6 +145,7 @@ export function getConfig(): AppConfig {
     pagesTable,
     documentsTableFqn,
     pagesTableFqn,
+    chunksTableFqn,
     pilotMaxFiles,
     warehouseId,
     databricksHost,

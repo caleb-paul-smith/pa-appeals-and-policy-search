@@ -33,8 +33,8 @@ export function ResultsList({
   if (!response) {
     return (
       <div className="results-empty">
-        <p>Enter a query to search the page-level index.</p>
-        <p className="muted">Results appear here ranked by match strength.</p>
+        <p>Search FEMA appeals &amp; policy.</p>
+        <p className="muted">Type a few words and press Search — results appear here, ranked.</p>
       </div>
     );
   }
@@ -54,10 +54,9 @@ export function ResultsList({
   if (response.results.length === 0) {
     return (
       <div className="results-empty">
-        <p>No pages matched.</p>
+        <p>No results for that search.</p>
         <p className="muted">
-          Scanned {response.candidatesScanned.toLocaleString()} candidate page
-          {response.candidatesScanned === 1 ? "" : "s"}.
+          Try fewer or different words, broaden the phrasing, or switch search mode.
         </p>
       </div>
     );
@@ -85,8 +84,8 @@ export function ResultsList({
 
       {semanticOnly && (
         <p className="results-note">
-          Semantic hits come from Vector Search chunks. PDF preview requires a document mapping in the
-          deterministic index.
+          Ranked by meaning. Opening the source PDF from a “By meaning” hit is coming soon — use
+          “Exact words” to open and highlight the page.
         </p>
       )}
 
@@ -143,6 +142,7 @@ function ResultItem({
   onSelect: (result: SearchResult) => void;
 }) {
   const active = result.documentId === selectedDocId && result.pageNumber === selectedPage;
+  const isSemantic = result.matchType === "semantic";
   return (
     <li>
       <button
@@ -150,6 +150,9 @@ function ResultItem({
         className={`result-card${active ? " active" : ""}`}
         onClick={() => onSelect(result)}
       >
+        {/* Confidence is what tells the user how much to trust a semantic hit,
+            so it leads the card. */}
+        {isSemantic && <ConfidenceMeter score={result.score} />}
         <div className="result-head">
           <span className="result-file" title={result.fileName}>
             {result.fileName}
@@ -160,18 +163,37 @@ function ResultItem({
           <span className={`tag tag-${result.matchType}`}>
             {MATCH_LABEL[result.matchType] ?? result.matchType}
           </span>
-          <span className="tag tag-count">
-            {result.matchCount} match{result.matchCount === 1 ? "" : "es"}
-          </span>
+          {!isSemantic && (
+            <span className="tag tag-count">
+              {result.matchCount} match{result.matchCount === 1 ? "" : "es"}
+            </span>
+          )}
         </div>
         <p className="result-snippet">
           {result.snippet.map((seg, i) =>
             seg.highlight ? <mark key={i}>{seg.text}</mark> : <span key={i}>{seg.text}</span>
           )}
         </p>
-        <p className="result-explain">{result.matchExplanation}</p>
+        {!isSemantic && <p className="result-explain">{result.matchExplanation}</p>}
       </button>
     </li>
+  );
+}
+
+/** Leading confidence bar for semantic results. Score is clamped to [0,1] for
+ *  the bar width; the exact value is shown alongside and on hover. */
+function ConfidenceMeter({ score }: { score: number }) {
+  const pct = Math.round(Math.max(0, Math.min(1, score)) * 100);
+  const strength = pct >= 66 ? "high" : pct >= 33 ? "medium" : "low";
+  return (
+    <div className={`confidence confidence-${strength}`} title={`Relevance score: ${score.toFixed(3)}`}>
+      <div className="confidence-bar" aria-hidden>
+        <div className="confidence-fill" style={{ width: `${pct}%` }} />
+      </div>
+      <span className="confidence-label">
+        Relevance <strong>{score.toFixed(2)}</strong>
+      </span>
+    </div>
   );
 }
 
