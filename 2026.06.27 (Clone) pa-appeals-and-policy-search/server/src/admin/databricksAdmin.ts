@@ -79,10 +79,11 @@ export async function triggerRefresh(
       message: "Demo refresh created. Configure DATABRICKS_HOST in Databricks to submit the processor notebook.",
     };
   }
-  // Use a PAT stored as a Databricks secret (JOBS_TOKEN) for Jobs API calls.
-  // Neither the forwarded user OAuth token nor DATABRICKS_TOKEN carry the 'jobs'
-  // scope in this workspace; a PAT bypasses OAuth scope restrictions entirely.
-  const jobsToken = process.env.JOBS_TOKEN || process.env.DATABRICKS_TOKEN || userToken;
+  // Forward the caller's token so the job is submitted AS the calling user (per
+  // CLAUDE.md). This requires the app to request the 'jobs' OAuth scope, which
+  // app.yaml does. We intentionally do NOT fall back to an app-level PAT — that
+  // would run every job as one identity and defeat per-user governance/audit.
+  const jobsToken = userToken;
   const response = await databricksPost<SubmitRunResponse>(
     "/api/2.1/jobs/runs/submit",
     {
@@ -133,8 +134,8 @@ export async function fetchRunStatus(
       endTime: "Demo",
     };
   }
-  // Use the same PAT-backed token for run status polling.
-  const jobsToken = process.env.JOBS_TOKEN || process.env.DATABRICKS_TOKEN || userToken;
+  // Same as triggerRefresh: forward the caller's token for run-status polling.
+  const jobsToken = userToken;
   const data = await databricksGet<RunStatusResponse>(
     `/api/2.1/jobs/runs/get?run_id=${encodeURIComponent(cleanRunId)}`,
     jobsToken,
