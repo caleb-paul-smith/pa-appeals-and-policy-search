@@ -2,12 +2,6 @@ command:
   - npm
   - run
   - start
-resources:
-  - name: secret
-    secret:
-      scope: pa-appeals-and-policy-search
-      key: jobs-token
-      permission: READ
 oauth_scopes:
   - jobs
   - sql
@@ -43,5 +37,3 @@ env:
     value: ""
   - name: ADMIN_USERS
     value: "0492734585@fema.dhs.gov"
-  - name: JOBS_TOKEN
-    valueFrom: secret
